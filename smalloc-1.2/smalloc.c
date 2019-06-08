@@ -19,11 +19,23 @@ void sm_container_split(sm_container_ptr hole, size_t size)
 	remainder->data = ((void *)remainder) + sizeof(sm_container_t) ;
 	remainder->dsize = hole->dsize - size - sizeof(sm_container_t) ;
 	remainder->status = Unused ;
-	remainder->next = hole->next ;
+    remainder->next = hole->next ;
+    remainder->next_unused = hole->next_unused ;
+	/*remainder->next = 0x0;*/
 	hole->next = remainder ;
+	hole->next_unused = remainder ;
+    if ( sm_unused_containers == 0x0)
+        sm_unused_containers = remainder;
+    if (sm_unused_containers->next == remainder)
+        sm_unused_containers = remainder ;
 
 	if (hole == sm_last)
 		sm_last = remainder ;
+
+	sm_container_ptr itr ;
+	int i = 0 ;
+	for (itr = sm_unused_containers ; itr != 0x0 && itr != hole ; itr = itr->next_unused, i++) 
+        if (itr->next_unused == hole) itr->next_unused = remainder ;
 }
 
 void * sm_retain_more_memory(int size)
@@ -101,6 +113,7 @@ void * smalloc(size_t size)
 		}
 		else {
 			sm_last->next = hole ;
+			sm_last->next_unused = hole ;
 			sm_last = hole ;
 			hole->next = 0x0 ;
 		}
@@ -122,6 +135,13 @@ void sfree(void * p)
 		if (itr->data == p) {
 			itr->status = Unused ;
             memory_allocated -= itr->dsize;
+            if (itr->next == sm_unused_containers)
+                sm_unused_containers = itr;
+            if (itr->next->status == Unused) {
+                itr->dsize = itr->dsize + itr->next->dsize;
+                itr->next_unused = itr->next->next_unused;
+                itr->next = itr->next->next;
+            }
 			break ;
 		}
 	}
@@ -151,7 +171,24 @@ void print_sm_uses()
 	fprintf(stderr, "==================== sm_uses ==========================\n") ;
     fprintf(stderr, "AMOUNT OF MEMORY (all):%d\n", memory_all);
     fprintf(stderr, "AMOUNT OF MEMORY (allocated at now):%d\n", memory_allocated);
-    fprintf(stderr, "AMOUNT OF MEMORY (unallocated):%d\n", memory_all - (memory_allocated + retain_ct * 64));
+    fprintf(stderr, "AMOUNT OF MEMORY (unallocated):%ld\n", memory_all - (memory_allocated + retain_ct * sizeof(sm_container_t) * 2));
     fprintf(stderr, "AMOUNT OF MEMORY (allocated so far):%d\n", memory_accumulate);
 	fprintf(stderr, "=======================================================\n") ;
+}
+void print_sm_unuses()
+{
+	sm_container_ptr itr ;
+	int i = 0 ;
+	printf("==================== sm_unuses ====================\n") ;
+	for (itr = sm_unused_containers ; itr != 0x0 ; itr = itr->next_unused, i++) {
+		char * s ;
+		printf("%3d:%p:%s:", i, itr->data, itr->status == Unused ? "Unused" : "  Busy") ;
+		printf("%8d:", (int) itr->dsize) ;
+
+		for (s = (char *) itr->data ;
+			 s < (char *) itr->data + (itr->dsize > 8 ? 8 : itr->dsize) ;
+			 s++) 
+			printf("%02x ", *s) ;
+		printf("\n") ;
+	}
 }

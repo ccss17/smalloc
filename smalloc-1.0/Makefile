@@ -1,7 +1,11 @@
 override CFLAGS += -g -ggdb
-CC=gcc
 
 all: libsm
 
 libsm: smalloc.c
-	$(CC) -c -o ../build/$@-1.0.a $?
+	gcc -c -o $@.a $?
+	make -C test
+
+clean:
+	if test -f libsm.a; then rm libsm.a; fi
+	make clean -C test

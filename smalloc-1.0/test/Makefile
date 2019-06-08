@@ -1,0 +1,18 @@
+override CFLAGS += -g -ggdb
+COMPILE = -I.. -L.. -lsm
+
+all: test1 test2 test3
+
+test1: test1.c
+	gcc $(COMPILE) $? -o $@
+
+test2: test2.c
+	gcc $(COMPILE) $? -o $@
+
+test3: test3.c
+	gcc $(COMPILE) $? -o $@
+
+clean:
+	if test -f test1; then rm test1; fi
+	if test -f test2; then rm test2; fi
+	if test -f test3; then rm test3; fi

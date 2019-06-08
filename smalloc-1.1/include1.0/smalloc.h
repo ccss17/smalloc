@@ -1,7 +1,10 @@
 #ifndef _SMALLOC
 #define _SMALLOC
-#define VERSION 11
-typedef enum { Busy, Unused } sm_container_status ;
+#define VERSION 10
+
+typedef enum {
+	Busy, Unused
+} sm_container_status ;
 
 typedef struct _sm_container_t {
 	sm_container_status status ;
@@ -16,5 +19,5 @@ typedef sm_container_t * sm_container_ptr ;
 void * smalloc(size_t size) ; 
 void sfree(void * p) ;
 void print_sm_containers() ;
-void print_sm_uses() ; 
+ void print_sm_uses() ; 
 #endif

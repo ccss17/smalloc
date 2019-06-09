@@ -131,6 +131,7 @@ void * smalloc(size_t size)
 void sfree(void * p)
 {
 	sm_container_ptr itr ;
+	sm_container_ptr itr_prev = 0x0;
 	for (itr = sm_first ; itr->next != 0x0 ; itr = itr->next) {
 		if (itr->data == p) {
 			itr->status = Unused ;
@@ -142,8 +143,14 @@ void sfree(void * p)
                 itr->next_unused = itr->next->next_unused;
                 itr->next = itr->next->next;
             }
+            if (itr_prev != 0x0 && itr_prev->status == Unused) {
+                itr_prev->dsize = itr_prev->dsize + itr->dsize;
+                itr_prev->next_unused = itr->next_unused;
+                itr_prev->next = itr->next;
+            }
 			break ;
 		}
+        itr_prev = itr;
 	}
 }
 

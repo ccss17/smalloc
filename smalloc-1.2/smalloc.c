@@ -68,11 +68,7 @@ void * smalloc(size_t size)
 	sm_container_ptr hole = 0x0 ;
 
 	sm_container_ptr itr = 0x0 ;
-	for (itr = sm_first ; itr != 0x0 ; itr = itr->next) {
-		if (itr->status == Busy)
-			continue ;
-
-        /*if (size == itr->dsize) {*/
+	for (itr = sm_unused_containers; itr != 0x0 ; itr = itr->next_unused) {
         if (size + sizeof(sm_container_t) == itr->dsize) {
 			// a hole of the exact size
 			itr->status = Busy ;
